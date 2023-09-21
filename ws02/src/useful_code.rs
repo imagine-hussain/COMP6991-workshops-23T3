@@ -6,27 +6,27 @@ enum TimeOfDay {
     Midday,
     Evening,
     Midnight,
-    Total
+    Total,
 }
 
 #[derive(Debug)]
-struct Entry {
-    time_period: String,
-    station: String,
-    entries: HashMap<TimeOfDay, i32>,
-    exits: HashMap<TimeOfDay, i32>,
-    latitude: f64,
-    longitude: f64,
+pub struct Entry {
+    pub time_period: String,
+    pub station: String,
+    pub entries: HashMap<TimeOfDay, i32>,
+    pub exits: HashMap<TimeOfDay, i32>,
+    pub latitude: f64,
+    pub longitude: f64,
 }
 
-fn convert_csventry_to_entry(csv_entry: &CSVEntry) -> Entry {
+pub fn convert_csventry_to_entry(csv_entry: &CSVEntry) -> Entry {
     let mut entry = Entry {
         time_period: csv_entry.time_period.clone(),
         station: csv_entry.station.clone(),
         entries: HashMap::new(),
         exits: HashMap::new(),
         latitude: csv_entry.latitude,
-        longitude: csv_entry.longitude
+        longitude: csv_entry.longitude,
     };
 
     if let Some(e) = csv_entry.entries_morning {
@@ -62,5 +62,4 @@ fn convert_csventry_to_entry(csv_entry: &CSVEntry) -> Entry {
     }
 
     entry
-
 }
