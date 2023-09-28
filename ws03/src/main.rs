@@ -117,13 +117,13 @@ fn run_command(cmd: &str) -> Result<(), Box<dyn Error>> {
     let mut editor = BufferEditor {
         buffer: Buffer::new(),
     };
-    if cmd.starts_with("open") {
-        run_game(
+    let cmds = cmd.split_whitespace().collect::<Vec<_>>();
+    match cmds.first() {
+        Some(&"open") => run_game(
             &mut editor,
             GameSettings::new().tick_duration(Duration::from_millis(25)),
-        )?;
-    } else {
-        println!("Command not recognised!");
+        )?,
+        _ => println!("Command not recognised!"),
     }
 
     Ok(())
@@ -153,4 +153,31 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     Ok(())
+}
+
+//
+// ownership / moving
+// &
+// &mut
+//
+fn read_only(s: &String) {
+    println!("{}", s);
+}
+
+fn read_write(s: &mut String) {
+    s.push_str("oook");
+}
+
+fn foo(s: &str) {
+    let mut s = "oook".to_string();
+    let s1 = &s;
+    let s2 = &mut s;
+
+    read_only(s2);
+    ///??
+    ///
+    read_write(s2);
+
+    //
+    println!("{}", s);
 }
