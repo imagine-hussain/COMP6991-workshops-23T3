@@ -1,7 +1,9 @@
+
 use termgame::{
     run_game, CharChunkMap, Controller, Game, GameEvent, GameSettings, KeyCode, SimpleEvent,
 };
 
+use std::collections::HashMap;
 use std::error::Error;
 use std::time::Duration;
 /// This is a single "buffer".
@@ -9,12 +11,14 @@ struct Buffer {
     text: String,
 }
 
+
 impl Buffer {
     /// This creates a new Buffer, to use it you should run:
     /// ```rust
     /// Buffer::new()
     /// ```
     fn new() -> Buffer {
+        Option::take(&mut self)
         Buffer {
             text: String::new(),
         }
@@ -69,14 +73,21 @@ impl Buffer {
 /// This struct implements all the
 /// logic for how the editor should work. It
 /// implements "Controller", which defines how
-/// something should interact with the terminal.
+// something should interact with the terminal.
 struct BufferEditor {
-    buffer: Buffer,
+    buffers: HashMap<String, Buffer>,
+    active_buffer: Option<Buffer>,
 }
 
 impl Controller for BufferEditor {
     /// This gets run once, you can probably ignore it.
-    fn on_start(&mut self, _game: &mut Game) {}
+    fn on_start(&mut self, game: &mut Game) {
+        // active bufer
+        let mut chunkmap = CharChunkMap::new();
+        self.buffer();
+        self.buffer.chunkmap_from_textarea(&mut chunkmap);
+        game.swap_chunkmap(&mut chunkmap);
+    }
 
     /// Any time there's a keypress, you'll get this
     /// function called.
@@ -103,7 +114,8 @@ impl Controller for BufferEditor {
             _ => {}
         }
         let mut chunkmap = CharChunkMap::new();
-        self.buffer.chunkmap_from_textarea(&mut chunkmap);
+        // takes a buffer -> render
+        self.buffer().chunkmap_from_textarea(&mut chunkmap);
         game.swap_chunkmap(&mut chunkmap);
     }
 
@@ -113,16 +125,16 @@ impl Controller for BufferEditor {
     fn on_tick(&mut self, _game: &mut Game) {}
 }
 
-fn run_command(cmd: &str) -> Result<(), Box<dyn Error>> {
-    let mut editor = BufferEditor {
-        buffer: Buffer::new(),
-    };
+fn run_command(cmd: &str, editor: &mut BufferEditor) -> Result<(), Box<dyn Error>> {
     let cmds = cmd.split_whitespace().collect::<Vec<_>>();
     match cmds.first() {
-        Some(&"open") => run_game(
-            &mut editor,
-            GameSettings::new().tick_duration(Duration::from_millis(25)),
-        )?,
+        //
+        Some(&"open") => {
+            run_game(
+                editor,
+                GameSettings::new().tick_duration(Duration::from_millis(25)),
+            )?;
+        }
         _ => println!("Command not recognised!"),
     }
 
@@ -170,14 +182,52 @@ fn read_write(s: &mut String) {
 
 fn foo(s: &str) {
     let mut s = "oook".to_string();
-    let s1 = &s;
-    let s2 = &mut s;
 
-    read_only(s2);
-    ///??
-    ///
-    read_write(s2);
+    //
+    let ref_ = foo_life(&s);
 
+
+    drop(s); // s is no longer valid
+    dbg!(ref_);
+    // ///??
+    // ///
+    // read_write(s2);
+    //
     //
     println!("{}", s);
 }
+
+fn its(mut s: String) {
+    let mut_s = &mut s;
+    //
+    mut_s.push('\n');
+}
+
+impl BufferEditor {
+    fn buffer(&mut self) -> &mut Buffer {
+        match self.active_buffer {
+            Some(ref mut b) => b,
+            None => {
+                let b = Buffer::new();
+                self.active_buffer = Some(b);
+                &mut self.active_buffer.unwrap()
+            }
+        }
+    }
+}
+
+impl BufferEditor {
+    fn new() -> Self {
+        Self {
+            buffers: HashMap::new(),
+            active_buffer: None,
+        }
+    }
+}
+
+
+fn foo_life<'a>(s: &'a str) -> &'a str {
+    s
+}
+
+
