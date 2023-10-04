@@ -170,4 +170,73 @@ fn main() {
 //     }
 // }
 //
+//  THEORY abt data structure
+//
+//  - Vec
+//  - Hashmap
+//     - more complex
+//     - why is the hash slow?
+//     - security
+//     - entropy
+//     - FxHashSet
+//  - VecDequue
+//  - LinkedList
+//
+//
+//
+//  Vector
+//  O(n)
+//  [1, 2, 3, _]
+//  [2, 3, _, _]
+//  ^
+//  size
+//
+//  VecDeque
+//  [1, 2, 3, _]
+//  [_, 2, 3, _]
+//
+//
+//  LinkedList is mcuh slower?
+//  O(1)?
+//  Indirection! can be expensive
+//  - cpu branch prediction
+//  - cache locality
+//
+//
+//  [1, 2, 3, _] -> prediction on cache
+//      ^  ^
+//
+//  Memory access a bit of a lie!
+//  [ ] -> register
+//  ram -> cpu
+//
+//  // 3GHz clocks -
+//  4 inches 2 inches
+//  4 inches per clock cycle
+//  3   20    50  300
+//  L1, L2, L3
+//  ^   ^    ^
+//  Caches! O
+//
+// Cache Lines!
+// 64 bytes - 128 bytes
+// [......X.....]
+// // 1 grab of the cache
+// [1, 2, 3, 4, 5, 6, 7, 8]
+// [9, ...........]
+//
+// [    (...)(...)(...)                          ]
+//                 ^
+//                                                ^ where misses hapen
+//
+// strucxt LL {
+// next *;
+// }
+// [1, 2, ONE, 4, 5, 6, 7, 8]
+// [1, 2, 3, 4, 5, TWO, 7, 8]
+// [1, 2, 3, 4, 5, THREE, 7, 8]
+// [1, 2, 3, 4, 5, FOUR, 7, 8]
+//
+// spatial
+// temporal locality
 //
