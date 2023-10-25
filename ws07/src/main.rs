@@ -2,7 +2,6 @@ use rand::Rng;
 use std::cmp::Eq;
 use std::collections::HashSet;
 use std::hash::Hash;
-
 #[allow(dead_code)]
 enum TaskResult {
     Finished(HashSet<Prerequisites>),
@@ -82,6 +81,7 @@ enum Prerequisites {
 ///                                                                                            |
 /// Clean Test File --------------------------------------------------------------------------/
 use std::process::{Command, Stdio};
+use std::thread;
 
 fn run_command(command: &[&str]) {
     Command::new(command[0])
@@ -96,18 +96,195 @@ fn run_command(command: &[&str]) {
 
 fn main() {
     //
+
+    //
+    let scheduler = init_scheduler();
+    scheduler.start();
+}
+
+// Functoin, Closures, ~lifetimes
+// Scheduler!
+// - Tasks
+// - run those taaask
+// - order
+// - cargo run?
+// - tokio <- ...
+// - cache
+// - yes!!!!! javascrip event loop
+// - "event" -> PQ
+// - async?
+// //
+// await foo();
+// block();
+// // processes -> context switching, threads!
+//
+//
+// Game Engines!
+// - ECS - Entity Component System
+// - uses a scheduler to run functions
+// - 2511 - 2022T2/3
+
+// what is a closure? what is a fucntioon?
+//             ^
+fn foo1() {
+    let v1 = vec![1, 2, 3];
+    let mut sum = String::new();
+    let v2: Vec<_> = v1.into_iter().map(double).collect();
+    // running sum?
+    // captures its environment
+    // ownership, lifetimes, borrowing,
+    // borrow!
+    // i32?
+    // closure, identifgied by the args and return
+    // (i32) -> i32
+    let double = |x: i32| x * 2;
+    let v3: Vec<_> = v2
+        .into_iter()
+        .map(|x| {
+            sum += x.to_string().as_str();
+            // drop takes ownership of sum
+            // drop(sum);
+            x * 2
+        })
+        .collect();
+}
+
+// what is the big limitation here?
+fn double(x: i32) -> i32 {
+    x * 2
+}
+
+//
+// Closure?
+// - its a unique type that cannot be written down
+// -
+//
+// - Fn
+// - FnMut
+// - FnOnce
+//  - can butcher / own things
+//  - only called at most once
+//
+//
+fn takes_ocne(f: impl FnOnce() -> i32) {
+    f();
+    // f(); //
+}
+
+// struct Double {
+//     functioon: *;
+//     sum: &String,
+// }
+// .call
+
+fn takes_mut(mut f: impl FnMut() -> i32) {
+    // how many times?
+    // as many times as want?
+    // how many mutable refs can we have at once?
+    f(); //
+    f(); //
+}
+
+fn takes_fn(f: impl Fn() -> i32) {
+    // how many times?
+    // in total: unlimited
+    // at the same time: unlimited
+    f();
+    f();
+    f();
+    f();
+    f();
+}
+
+// we are a lib autor
+//
+pub fn operatef(f: impl Fn() -> i32) {
+    f();
+    f();
+    f();
+    f();
+    f();
+}
+
+// whty we would use any of the other closure
+//
+// - the writer of the clousre
+// - the user of the closure
+//
+// FnOnce
+//  - drop
+//  - moves so can only call once
+//  - map, filter
+// FnMut
+// - used most places?
+// - reasonable compromise
+// Fn
+// - might want an Fn
+// - concurrency!
+//
+//
+//fn
+//
+fn main2() {
+    let v = vec![1, 2, 3];
+    let mut sum = String::new();
+
+    // FnOnce
+    // FnMut : FnOnce
+    // Fn: FnMut
+    let double = |x| x * 2;
+    let v2 = my_map(v, double);
+    let v2 = my_map_2(v2, double);
+}
+
+pub fn my_map(v: Vec<i32>, f: impl Fn(i32) -> i32) -> Vec<i32> {
+    let mut result = Vec::new();
+
+    for e in v {
+        result.push(f(e));
+    }
+
+    result
+}
+
+pub fn my_map_2(v: Vec<i32>, mut f: impl FnMut(i32) -> i32) -> Vec<i32> {
+    let mut result = Vec::new();
+
+    for e in v {
+        result.push(f(e));
+    }
+
+    result
+}
+
+fn init_scheduler<'a>() -> Scheduler<'a> {
     let mut scheduler = Scheduler::new();
 
-    // Add the task to clean cargo. Doesn't require anything,
-    // and once we've done it, we've started the clean command.
+    //
+    // this dies at the end of this functoin
+    let time_since_run = String::from("");
+
+    //
+    // LIFETIME
+    let time_since_run_2 = time_since_run.clone();
+    // closure  - Attr
+    // &, &mut - Hindley Milner approach
+    // Ocaml, Haskell, SML
+    // 1. what is the type of everything KNOWN
+    // 2. list of eqns (represent as a directed graph)
+    // type inference
     scheduler.add_task(Task {
         prerequisites: HashSet::new(),
-        task: Box::new(|| {
+        task: Box::new(move || {
+            // this keeps a ref to time_since_run
+            // &String
+            println!("last_run, {}", time_since_run_2);
             println!("Cleaning cargo.");
             run_command(&["cargo", "clean"]);
             TaskResult::Finished(HashSet::from([Prerequisites::CleanedCargo]))
         }),
     });
+    dbg!(time_since_run);
 
     // Build the print_randoms binary
     scheduler.add_task(Task {
@@ -163,6 +340,7 @@ fn main() {
             TaskResult::Finished(HashSet::from([Prerequisites::CleanedTestFile]))
         }),
     });
+    vec![1, 2, 3];
 
-    scheduler.start();
+    scheduler
 }
