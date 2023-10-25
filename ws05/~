@@ -1,0 +1,3 @@
+
+
+method textDocument/documentHighlight is not supported by any of the servers registered for the current buffer
