@@ -3,7 +3,7 @@ use rand::Rng;
 use std::time::Instant;
 
 struct ParallelIterator {
-    iter: Vec<i32>
+    iter: Vec<i32>,
 }
 
 impl ParallelIterator {
@@ -21,7 +21,6 @@ impl ParallelIterator {
         // TODO
         vec![]
     }
-
 }
 
 trait IntoParIter {
@@ -39,7 +38,6 @@ fn time<T>(test_name: &str, data: T, f: impl Fn(T) -> ()) {
     f(data);
     println!("Test {test_name}: {:.2?}", before.elapsed());
 }
-
 
 fn main() {
     let test_length = 1000000;
@@ -60,3 +58,61 @@ fn main() {
         assert_eq!(iter.find(2), Some(find_index));
     });
 }
+
+// Concurrency / async scheduling!!!!!!
+//
+// concurrency
+//  multiple processes at the _same time_? ?
+//
+//  io-bound (input / output) - examples
+//      network
+//      device input
+//      disk
+//      database
+//
+//  3 seconds
+//  1s get(google.com) // waiting
+//  1s get(facebook.com) // waiting
+//  1s get(twitter.com) // waiting
+//
+//  cpu-bound?
+//  sum(vec1)
+//  sum(vec2)
+//  500 v1 -> 500 v2 -> 500 v1 -> 500 v2
+//  1000 v1
+//  1000 v2
+//  0 -------------------------500---------------- 1000
+//  xxxxxxxxxxxxxxxxxxxxxxxxxxx
+//                              fffffffffffffffffffffff
+//  0 ---------------------------------------------- 1
+//  1s - io-bound
+//  "cpu"
+//
+//  -- cpus
+//
+//  -- threads (os) ->
+//  -- green (go) -> tokio async/await
+//
+//
+//  google.com, facebook.com, twitter.com
+//
+//
+//  io-bound vs cpu-bound
+//
+// paralleism
+//
+//
+// thread
+// data race
+// mutex
+// arc
+// send, sync
+// channel
+//
+//
+// await ?
+//
+// always better?
+// - high cost?
+// - io bound -> dont need
+//
