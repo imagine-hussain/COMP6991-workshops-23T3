@@ -1,15 +1,61 @@
-use rand::Rng;
+use std::{
+    num::NonZeroUsize,
+    slice::Chunks,
+    sync::{Arc, Mutex},
+    thread,
+    time::Instant,
+};
 
-use std::time::Instant;
-
-struct ParallelIterator {
+pub struct ParallelIterator {
     iter: Vec<i32>,
 }
 
+impl From<Vec<i32>> for ParallelIterator {
+    fn from(iter: Vec<i32>) -> Self {
+        Self { iter }
+    }
+}
+
+fn find_in_chunk(chunk: &[i32], target: i32) -> Option<usize> {
+    for (i, item) in chunk.iter().enumerate() {
+        if *item == target {
+            return Some(i);
+        }
+    }
+    None
+}
+
+// Some(7)
+// [0, 1, 2, 3, 4, 5 | 6, 7, 8, 9, 10]
+//                     0, 1
+// 1 * 6 + 2
+// chunK_size * chunk_number + (index_inside_chunk)
+
 impl ParallelIterator {
+    const NUM_THREADS: usize = 512;
+
     fn find(&self, search_for: i32) -> Option<usize> {
-        // TODO
-        None
+        let chunk_size = (self.iter.len() as f64 / Self::NUM_THREADS as f64).ceil() as usize;
+        let chunks = self.iter.chunks(chunk_size);
+
+        let offset_to_idx = |(ch_num, offset)| (ch_num * chunk_size) + offset;
+        // Server!
+        // parralleism
+        // 1. load balancer -> split accros real diff machines
+        // 2. AWS lambda -> each requreust is on a diff machine
+        // cold start -> park it some core
+        // "real OS" -> "hypervisor"
+
+        thread::scope(|s| {
+            let handles: Vec<_> = chunks
+                .map(|chunk| s.spawn(move || find_in_chunk(chunk, search_for)))
+                .collect();
+            handles
+                .into_iter()
+                .enumerate()
+                .find_map(|(chunk, h)| h.join().unwrap().map(|offset| (chunk, offset)))
+                .map(offset_to_idx)
+        })
     }
 
     fn find_all(&self, search_for: i32) -> Vec<usize> {
@@ -17,9 +63,36 @@ impl ParallelIterator {
         vec![]
     }
 
-    fn map(&self /*you will need to add the argument here*/) -> Vec<i32> {
-        // TODO
-        vec![]
+    pub fn map<T, F>(&self, f: &F) -> Vec<T>
+    where
+        T: Send,
+        F: Fn(i32) -> T + Sync,
+    {
+        let chunks = self.to_chunks();
+
+        thread::scope(|s| {
+            let handles: Vec<_> = chunks
+                .map(move |chunk| {
+                    s.spawn(move || chunk.into_iter().map(move |&i| f(i)).collect::<Vec<_>>())
+                })
+                .collect();
+
+            handles
+                .into_iter()
+                .map(|h| h.join().unwrap())
+                .flatten()
+                .collect()
+        })
+    }
+
+    fn calculate_chunk_size(&self) -> usize {
+        let num_threads = std::thread::available_parallelism().unwrap().get();
+        (self.iter.len() as f64 / num_threads as f64).ceil() as usize
+    }
+
+    fn to_chunks(&self) -> Chunks<i32> {
+        let chunk_size = self.calculate_chunk_size();
+        self.iter.chunks(chunk_size)
     }
 }
 
@@ -40,8 +113,8 @@ fn time<T>(test_name: &str, data: T, f: impl Fn(T) -> ()) {
 }
 
 fn main() {
-    let test_length = 1000000;
-    let find_index = 77722;
+    let test_length = 10000000;
+    let find_index = 9000000;
 
     let mut nums: Vec<i32> = vec![0, 1].repeat(test_length / 2);
     nums[find_index] = 2;
@@ -55,10 +128,28 @@ fn main() {
 
     time("find_parallel", nums.clone(), |nums| {
         let iter = nums.into_par_iter();
+        iter.find(2);
         assert_eq!(iter.find(2), Some(find_index));
     });
-}
 
+    let double = &|x| x * 2;
+    let linear: Vec<i32> = (0..1_000_000).collect();
+    let parallel = ParallelIterator::from(linear.clone());
+
+    time("map_normal", linear, |v| {
+        let x: Vec<_> = v.into_iter().map(double).collect();
+        if x.len() < rand::random::<usize>() / usize::MAX + 100 {
+            panic!("out of luck");
+        }
+    });
+
+    time("map_parall", parallel, |v| {
+        let x = v.map(double);
+        if x.len() < rand::random::<usize>() / usize::MAX + 100 {
+            panic!("out of luck");
+        }
+    });
+}
 // Concurrency / async scheduling!!!!!!
 //
 // concurrency
@@ -115,4 +206,19 @@ fn main() {
 // always better?
 // - high cost?
 // - io bound -> dont need
+//
+//
+// data races!
+// race condition
+//
+//
+// incrementing and decremeing is a problem?
+// clone
+// pointer +1, -1
+// Rc
+//
+//
+// Send, Sync
+// Send -> Can send acrross threads
+// Sync -> Can share references across threads
 //
