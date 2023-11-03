@@ -32,19 +32,16 @@ fn find_in_chunk(chunk: &[i32], target: i32) -> Option<usize> {
 // chunK_size * chunk_number + (index_inside_chunk)
 
 impl ParallelIterator {
-    const NUM_THREADS: usize = 512;
+    const NUM_THREADS: usize = 16;
 
     fn find(&self, search_for: i32) -> Option<usize> {
-        let chunk_size = (self.iter.len() as f64 / Self::NUM_THREADS as f64).ceil() as usize;
+        let num_threads: usize = thread::available_parallelism()
+            .map(|u| u.get())
+            .unwrap_or(Self::NUM_THREADS);
+        let chunk_size = (self.iter.len() as f64 / num_threads as f64).ceil() as usize;
         let chunks = self.iter.chunks(chunk_size);
 
         let offset_to_idx = |(ch_num, offset)| (ch_num * chunk_size) + offset;
-        // Server!
-        // parralleism
-        // 1. load balancer -> split accros real diff machines
-        // 2. AWS lambda -> each requreust is on a diff machine
-        // cold start -> park it some core
-        // "real OS" -> "hypervisor"
 
         thread::scope(|s| {
             let handles: Vec<_> = chunks
@@ -94,6 +91,61 @@ impl ParallelIterator {
         let chunk_size = self.calculate_chunk_size();
         self.iter.chunks(chunk_size)
     }
+}
+
+trait IntoParIter {
+    fn into_par_iter(self) -> ParallelIterator;
+}
+
+impl IntoParIter for Vec<i32> {
+    fn into_par_iter(self) -> ParallelIterator {
+        ParallelIterator { iter: self }
+    }
+}
+
+fn time<T>(test_name: &str, data: T, f: impl Fn(T) -> ()) {
+    let before = Instant::now();
+    f(data);
+    println!("Test {test_name}: {:.2?}", before.elapsed());
+}
+
+fn main() {
+    let test_length = 10000000;
+    let find_index = 9000000;
+
+    let mut nums: Vec<i32> = vec![0, 1].repeat(test_length / 2);
+    nums[find_index] = 2;
+    nums[find_index + 100] = 2;
+    nums[find_index + 1000] = 2;
+
+    time("find_normal", nums.clone(), |nums| {
+        let mut iter = nums.into_iter();
+        assert_eq!(iter.position(|i| i == 2), Some(find_index));
+    });
+
+    time("find_parallel", nums.clone(), |nums| {
+        let iter = nums.into_par_iter();
+        iter.find(2);
+        assert_eq!(iter.find(2), Some(find_index));
+    });
+
+    let double = &|x| x * 2;
+    let linear: Vec<i32> = (0..1_000_000).collect();
+    let parallel = ParallelIterator::from(linear.clone());
+
+    time("map_normal", linear, |v| {
+        let x: Vec<_> = v.into_iter().map(double).collect();
+        if x.len() < rand::random::<usize>() / usize::MAX + 100 {
+            panic!("out of luck");
+        }
+    });
+
+    time("map_parall", parallel, |v| {
+        let x = v.map(double);
+        if x.len() < rand::random::<usize>() / usize::MAX + 100 {
+            panic!("out of luck");
+        }
+    });
 }
 
 trait IntoParIter {
