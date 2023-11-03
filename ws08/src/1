@@ -1,0 +1,35 @@
+use std::{
+    rc::Rc,
+    sync::{Arc, Mutex},
+    thread,
+    time::Duration,
+};
+//
+// Handles!
+fn main() {
+    let v = Arc::new(Mutex::new(Vec::new()));
+    thread::scope(|s| {
+        s.spawn(|| {
+            println!("start twitter");
+            thread::sleep(Duration::from_secs(5));
+            let mut g = v.lock().unwrap();
+            g.push("twitter");
+            println!("start twitter");
+        });
+        s.spawn(|| {
+            println!("start facebook");
+            thread::sleep(Duration::from_secs(2));
+            v.lock().unwrap().push("facebook");
+            println!("start facebook");
+        });
+        s.spawn(|| {
+            println!("start google");
+            thread::sleep(Duration::from_secs(1));
+            v.lock().unwrap().push("google");
+            println!("start google");
+        });
+    });
+    dbg!(v.lock().unwrap());
+}
+
+// Do not communicate by sharing memory; instead, share memory by communicating.
