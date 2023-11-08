@@ -1,0 +1,58 @@
+1) I saw someone's code fail to compile because they
+were trying to send non-thread-safe data across threads. 
+How does the Rust language allow for static (i.e. at compile time)
+guarantees that specific data can be sent/shared acrosss threads?
+
+- only one "thing"
+  - Ownership
+  - drops -> mvoes Ownership
+  - Hint: name of this lab exercise? 
+  - send trait / sync trait
+  - Send: can be sent to another thread
+  - Sync:
+
+2) Do you have to then implement the Send and Sync traits for
+every piece of data (i.e. a struct) you want to share and send across threads?
+  - Automatic? Marked by the compiler
+  - Do these traits have associated methods?
+  - Marks types?
+  - Marker traits
+```rust
+trait Send { }
+```
+
+3) What types in the course have I seen that aren't Send? Give one example, 
+and explain why that type isn't Send 
+  - Rc? -> can't be sent across threads
+    - Reason: Count is not thread safe
+      - There is no atomisation when incremening / decremening reference count
+      - Use an Arc insstead, if you want threadasfe Rc
+  - Mutex can be sent
+  - ReEntrantLock -> 
+  - g1 = lock.lock() -
+  - g2 = lock.lock() - 
+  -  ^^^^^ re-enrty???
+  - Guards over mutexes can't be sent
+
+4) What is the relationship between Send and Sync? Does this relate
+to Rust's Ownership system somehow?
+  - Sync: Borrow between thread?
+  - Sync?
+  - T is sync if and only if &T is send
+
+5) Are there any types that could be Send but NOT Sync? Is that even possible?
+  - Send but not Sync
+  - T is Send
+  - &T is not Send
+  - &T <-> what can we only do one at time?
+  - &mut T <-> &T
+  - &T <-> can do mutation?
+  - mutate, with onyl a &T
+  - Interior mutability
+
+  - RefCell <-> can mutate with only a &T
+  - Runtime check to see that we are not violating the rules of borrowing
+
+6) Could we implement Send ourselves using safe rust? why/why not?
+
+- unsafe trait

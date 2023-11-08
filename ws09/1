@@ -1,9 +1,9 @@
+use std::cell::RefCell;
+
 use libc::{c_char, c_double, c_int, fclose, fgets, fopen, fscanf, FILE};
 
 struct File {
-    // // ????????????????
     // todo!()
-    f: FILE,
 }
 
 /// This function converts a string into a Vec<i8> which can
@@ -21,8 +21,6 @@ fn to_c_string(string: &str) -> Vec<i8> {
 
 impl File {
     fn open(_path: &str) -> Option<Self> {
-        // calling the libc
-        // doing the chewcks that u reqiure?
         todo!()
     }
 
@@ -45,7 +43,6 @@ impl File {
 
 impl Drop for File {
     fn drop(&mut self) {
-        // what do we on drop?
         println!("Dropping file.");
     }
 }
@@ -81,11 +78,11 @@ fn main() {
 // }
 //
 //
-// struct Foo {
-//     inner: RefCell<i32>,
-// }
-//
-// unsafe trait MyTrait {}
+struct Foo {
+    inner: RefCell<i32>,
+}
+
+unsafe trait MyTrait {}
 
 // WHAT??????????/
 //
@@ -121,41 +118,27 @@ fn main() {
 // unsafe functionso vs block
 //
 // why?
-// fn pointer() {
-//     let x = String::new();
-//     let p_raw = &x as *const String;
-//     let p_mut: *mut String = p_raw as *mut String;
-//     drop(x);
-//     // # Safety
-//     // AHJJJJJJJJJJ
-//     // I HVE CHECKED that this is not bad
-//     unsafe {
-//         (*p_mut).push('h');
-//     };
-// }
-//
-// fn uses_unsafe() {
-//     pointer();
-//     unsafe {
-//         scaryyyyyyyyyyy(std::ptr::null_mut());
-//     };
-// }
-//
-// /// # Safety
-// /// DONT do x, y, z
-// /// ENSURE a, b, c
-// /// hey user, pls make sure, f is not null
-// unsafe fn scaryyyyyyyyyyy(f: *mut FILE) {
-//     *f;
-//     let x = String::new();
-//     let p_raw = &x as *const String;
-//     let p_mut: *mut String = p_raw as *mut String;
-//     drop(x);
-//     // depends?
-//     unsafe {
-//         (*p_mut).push('h');
-//     }
-// }
-//
-// FFI <->
-// foregin functions interface
+fn pointer() {
+    let x = String::new();
+    let p_raw = &x as *const String;
+    let p_mut: *mut String = p_raw as *mut String;
+    drop(x);
+    // # Safety
+    // AHJJJJJJJJJJ
+    unsafe {
+        (*p_mut).push('h');
+    };
+}
+
+fn foo() {
+    scaryyyyyyyyyyy();
+    pointer();
+}
+
+unsafe fn scaryyyyyyyyyyy() {
+    let x = String::new();
+    let p_raw = &x as *const String;
+    let p_mut: *mut String = p_raw as *mut String;
+    drop(x);
+    (*p_mut).push('h');
+}
