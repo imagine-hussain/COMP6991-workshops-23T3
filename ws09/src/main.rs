@@ -3,7 +3,7 @@ use libc::{c_char, c_double, c_int, fclose, fgets, fopen, fscanf, FILE};
 struct File {
     // // ????????????????
     // todo!()
-    f: FILE,
+    fp: *mut FILE,
 }
 
 /// This function converts a string into a Vec<i8> which can
@@ -20,14 +20,51 @@ fn to_c_string(string: &str) -> Vec<i8> {
 }
 
 impl File {
-    fn open(_path: &str) -> Option<Self> {
-        // calling the libc
-        // doing the chewcks that u reqiure?
-        todo!()
+    const BUF_SIZE: usize = 1024;
+    pub fn open(path: &str) -> Option<Self> {
+        let c_path = to_c_string(path);
+        let c_rdonly = to_c_string("r");
+        // # Safety:
+        // We check that the file pointer is not null
+        // before use. On a null ptr, we return None
+        // from the function
+        let fp = unsafe {
+            let fp = fopen(c_path.as_ptr(), c_rdonly.as_ptr());
+            match fp.is_null() {
+                true => return None,
+                false => fp,
+            }
+        };
+        Some(Self { fp })
     }
 
     fn read_string(&mut self) -> Option<String> {
-        todo!()
+        // Read a string from the file
+        let mut out = Vec::<u8>::new();
+        let mut buf: [u8; Self::BUF_SIZE] = [0; Self::BUF_SIZE];
+        let buf_p = buf.as_mut_ptr() as *mut c_char;
+        loop {
+            // # Safety:
+            // Only read up to `Self::BUF_SIZE` bytes in
+            // appropriatly sized buffer
+            // fgets returns null on error - Check that null
+            unsafe {
+                let r = fgets(buf_p, Self::c_buf_size(), self.fp);
+                let bytes_read = match r.is_null() {
+                    true => return None,
+                    false if *r == 0 => break,
+                    false => *r as usize,
+                };
+                out.extend_from_slice(&buf[..bytes_read]);
+            }
+        }
+        // Convert the bytes into a string, checking for utf8
+        String::from_utf8(out).ok()
+    }
+
+    #[inline(always)]
+    pub const fn c_buf_size() -> c_int {
+        Self::BUF_SIZE as c_int
     }
 
     fn read_i64(&mut self) -> Option<i64> {
@@ -52,7 +89,7 @@ impl Drop for File {
 
 fn main() {
     let mut file = File::open("data/test_file.txt").expect("Could not open file.");
-    let s = file.read_string().unwrap();
+    let s = dbg!(file.read_string().unwrap());
     let i = file.read_i64().unwrap();
     let f = file.read_f64().unwrap();
     let c = file.read_char().unwrap();
