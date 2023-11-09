@@ -1,6 +1,7 @@
 use libc::{c_char, c_double, c_int, fclose, fgets, fopen, fscanf, FILE};
 
 struct File {
+    // // ????????????????
     // todo!()
     fp: *mut FILE,
 }
@@ -96,3 +97,103 @@ fn main() {
 
     println!("{s} {i} {f} {c}");
 }
+
+// fn dp(cache, x) {
+//     if x == 0 {
+//         return cache.lock().unwrap()[0]
+//     }
+//     return cache.lock().unwrap()[x] + dp(cache, x - 1);
+//     //            ^ guard                 ^ recursive call
+// }
+//
+// struct Foo {
+//     lcok: ReEntrant<T>
+// }
+//
+// impl Foo {
+//     fn f1(&self) {
+//         lock.f1();
+//         let mut lock = self.lock.lock().unwrap();
+//     }
+//
+// }
+//
+//
+// struct Foo {
+//     inner: RefCell<i32>,
+// }
+//
+// unsafe trait MyTrait {}
+
+// WHAT??????????/
+//
+// Unsound vs Unsafe??????
+// - sound: proper functioning code - does what we want
+//  - No UB
+//- safe:
+//  - subset of sound code
+//  - code that the compiler can guarantee is sound
+//- unsafe code:
+//  - *can* be unsound
+//  - *can* be sound
+//  - the COMPILEr cant check soudnness
+//  - the USER must check soundness
+//
+// - There is code that is SOUND but, is not SAFE
+// - Keeps possible "unsound" code in specificically marked regions
+//
+// FIVE unsafe superpowers:
+//  - Dereference a raw pointer
+//  - Call an unsafe function or method
+//  - Access or modify a mutable static variable
+//  - Implement an unsafe trait
+//  - Access fields of unions
+//
+// Safe abstractions over unsafe code
+
+// does rust give u file pointers?
+// -
+//
+// fn foo() {}
+//
+// unsafe functionso vs block
+//
+// why?
+// fn pointer() {
+//     let x = String::new();
+//     let p_raw = &x as *const String;
+//     let p_mut: *mut String = p_raw as *mut String;
+//     drop(x);
+//     // # Safety
+//     // AHJJJJJJJJJJ
+//     // I HVE CHECKED that this is not bad
+//     unsafe {
+//         (*p_mut).push('h');
+//     };
+// }
+//
+// fn uses_unsafe() {
+//     pointer();
+//     unsafe {
+//         scaryyyyyyyyyyy(std::ptr::null_mut());
+//     };
+// }
+//
+// /// # Safety
+// /// DONT do x, y, z
+// /// ENSURE a, b, c
+// /// hey user, pls make sure, f is not null
+// unsafe fn scaryyyyyyyyyyy(f: *mut FILE) {
+//     *f;
+//     let x = String::new();
+//     let p_raw = &x as *const String;
+//     let p_mut: *mut String = p_raw as *mut String;
+//     drop(x);
+//     // depends?
+//     unsafe {
+//         (*p_mut).push('h');
+//     }
+// }
+//
+// FFI <->
+// foregin functions interface
