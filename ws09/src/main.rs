@@ -52,10 +52,12 @@ impl File {
                 let r = fgets(buf_p, Self::c_buf_size(), self.fp);
                 let bytes_read = match r.is_null() {
                     true => break,
-                    false if *r == 0 => break,
                     false => *r as usize,
                 };
                 out.extend_from_slice(&buf[..bytes_read - 1]);
+                if bytes_read < Self::BUF_SIZE {
+                    break;
+                }
             }
         }
         // Convert the bytes into a string, checking for utf8
@@ -95,4 +97,32 @@ fn main() {
     let c = file.read_char().unwrap();
 
     println!("{s} {i} {f} {c}");
+}
+
+unsafe trait Scary {}
+
+struct Foo;
+
+unsafe impl Scary for Foo {}
+
+fn raw_ptr() -> *mut String {
+    let mut s = String::from("scary");
+    let boxed = Box::leak(Box::new(s));
+    let p = boxed as *mut String;
+    unsafe {
+        drop(Box::from_raw(p));
+    }
+    return p;
+}
+
+/// # Safety
+/// bro pls give me good ptr
+unsafe fn free<T>(p: *mut T) {
+    if !p.is_null() {
+        drop(Box::from_raw(p));
+    }
+}
+
+fn precedenc(f: *mut File) {
+    unsafe { (*f).fp };
 }
